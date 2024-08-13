@@ -117,3 +117,18 @@ body {
     display: flex;
     flex-direction: column;
 }
+
+.loader {
+    width: 42px;
+    height: 42px;
+    background-image: url(/public/loader.svg);
+    background-size: 100%;
+    background-position: 50%;
+    background-repeat: no-repeat;
+    margin: 48px auto 0 auto;
+}
+
+.error-message {
+    margin: 48px;
+    text-align: center;
+}

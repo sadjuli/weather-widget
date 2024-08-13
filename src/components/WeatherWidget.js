@@ -2,7 +2,7 @@ import React from 'react'
 
 import '../styles/styles.css'
 
-function WeatherWidget({ data, forecastMode }) {
+function WeatherWidget({ data, state }) {
 
     const groupByDate = (list) => {
         if (!list) {
@@ -22,7 +22,7 @@ function WeatherWidget({ data, forecastMode }) {
 
     return (
         <div className='data'>
-            {forecastMode === 'today' ? (
+            {state === 'today' ? (
                 <div>
                     <h2 className='data-title'>Погода на сегодня в {data.name}</h2>
                     <div className='data-item'>Температура: {data.main.temp}°C</div>
