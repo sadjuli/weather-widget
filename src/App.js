@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import SearchBar from './components/SearchBar'
 import WeatherWidget from './components/WeatherWidget'
+import ForecastWidget from './components/ForecastWidget'
 
 import './styles/styles.css'
 
@@ -14,15 +15,7 @@ function App() {
     const [error, setError] = useState('')
     
     const [weatherData, setWeatherData] = useState(null)
-
-    const handleState = (value) => {
-        setState(value)
-        if (mode === 'location') {
-          fetchGeoWeather()
-        } else {
-          fetchWeather()
-        }
-    }
+    const [forecastData, setForecastData] = useState(null)
 
     const fetchGeoWeather = () => {
         if (state === 'today') {
@@ -35,8 +28,6 @@ function App() {
         if (!city) {
             return
         }
-
-        console.log('state', state)
         if (state === 'today') {
             fetchTodayWeather(city)
         } else {
@@ -44,24 +35,21 @@ function App() {
         }
     }
 
-    useEffect(() => {
-        fetchGeoWeather()
-    }, [])
-
     const fetchTodayWeather = async (city) => {
         setError('')
         setLoading(true)
-        setWeatherData(null)
         try {
             const response = await fetch(
                 `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric&lang=ru`
             )
             const data = await response.json()
-            if (data.cod == 200) {
+            if (data.cod == 200) {                
                 setWeatherData(data)
             } else if (data.cod == 404) {
+                setWeatherData(null)
                 setError('Город не найден')
             } else {
+                setWeatherData(null)
                 setError('Произошла ошибка при получении прогноза на сегодня')
             }
             setLoading(false)
@@ -73,17 +61,18 @@ function App() {
     const fetchForecastWeather = async (city) => {
         setError('')
         setLoading(true)
-        setWeatherData(null)
         try {
             const response = await fetch(
                 `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${API_KEY}&units=metric&lang=ru`
             );
             const data = await response.json()
             if (data.cod == 200) {
-                setWeatherData(data)
+                setForecastData(data)
             } else if (data.cod == 404) {
+                setForecastData(null)
                 setError('Город не найден')
             } else {
+                setForecastData(null)
                 setError('Произошла ошибка при получении прогноза на 5 дней')
             }
             setLoading(false)
@@ -120,7 +109,6 @@ function App() {
     const fetchTodayGeoWeather = async (latitude, longitude) => {
         setError('')
         setLoading(true)
-        setWeatherData(null)
         try {
             const response = await fetch(
                 `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric&lang=ru`
@@ -140,14 +128,13 @@ function App() {
     const fetchForecastGeoWeather = async (latitude, longitude) => {
         setError('')
         setLoading(true)
-        setWeatherData(null)
         try {
             const response = await fetch(
                 `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric&lang=ru`
             )
             const data = await response.json()
             if (data.cod == 200) {
-                setWeatherData(data)
+                setForecastData(data)
             } else {
                 setError('Произошла ошибка при получении прогноза по геолокации')
             }
@@ -159,51 +146,65 @@ function App() {
     };
 
     const handleSearch = async () => {
-        setWeatherData(null)
-        if (city) {
-            fetchWeather()
+        if (!city) {
+            setMode('location')
+        } else {
+            handleSetMode('search')
         }
-    };
+    }
 
     const handleSetMode = (value) => {
-        if (value === 'location') {
+        if (value === mode) {
+            fetchWeather()
+        } else {
+            setMode(value)
+        }
+    }
+
+    useEffect(() => {
+        fetchGeoWeather()
+    }, [])
+
+    useEffect(() => {
+        if (mode === 'location') {
+            fetchGeoWeather()
+          } else {
+            fetchWeather()
+          }
+    }, [state])
+
+    useEffect(() => {
+        if (mode === 'location') {
             setCity('')
             fetchGeoWeather()
         } else {
             fetchWeather()
         }
-        setMode(value)
-    }
-    
-    const handleSetCity = (value) => {
-        if (value) {
-            setMode('search')
-        } else {
-            setMode('location')
-        }
-        setCity(value)
-    }
+    }, [mode])
 
     return (
         <div className='weather'>
           
             <div className="weather-modes">
-              <div className={'weather-mode weather-mode--today ' + (state === 'today' ? 'weather-mode--active' : '') } onClick={() => handleState('today')}>На сегодня</div>
-              <div className={'weather-mode weather-mode--forecast ' + (state === 'today' ? '' : 'weather-mode--active')} onClick={() => handleState('forecast')}>Прогноз на 5 дней</div>
+              <div className={'weather-mode weather-mode--today ' + (state === 'today' ? 'weather-mode--active' : '') } onClick={() => setState('today')}>На сегодня</div>
+              <div className={'weather-mode weather-mode--forecast ' + (state === 'today' ? '' : 'weather-mode--active')} onClick={() => setState('forecast')}>Прогноз на 5 дней</div>
             </div>
             
             <SearchBar
                 city={city}
                 mode={mode}
-                setCity={handleSetCity}
+                setCity={setCity}
                 handleSearch={handleSearch}
-                handleSetMode={handleSetMode}
+                setMode={setMode}
             />
-            {weatherData && (
-                <WeatherWidget data={weatherData} state={state} />
-            )}
             {loading && (
                 <div className='loader'></div>
+            )}
+            {weatherData && state === 'today' && (
+                <WeatherWidget data={weatherData} />
+            )}
+            {forecastData && state === 'forecast' && (
+                <ForecastWidget data={forecastData} />
             )}
             {error && (
                 <div className='error-message'>{error}</div>
