@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import SearchBar from './components/SearchBar'
 import WeatherWidget from './components/WeatherWidget'
 
@@ -43,6 +43,10 @@ function App() {
             fetchForecastWeather(city)
         }
     }
+
+    useEffect(() => {
+        fetchGeoWeather()
+    }, [])
 
     const fetchTodayWeather = async (city) => {
         setError('')
